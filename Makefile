@@ -5,7 +5,7 @@ TESTS_SRC=$(wildcard test/*.c)
 TESTS_EXES=$(TESTS_SRC:.c=.test)
 
 CFLAGS += -std=c99 -Iinclude -DDEBUG
-LDFLAGS +=
+LDFLAGS += -lcurl
 
 all: libfarmbot.so.0
 
@@ -13,7 +13,7 @@ all: libfarmbot.so.0
 	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
 
 libfarmbot.so.0.0.1: $(LIB_OBJ)
-	$(CC) -shared -Wl,-soname,libfarmbot.so.0 -o libfarmbot.so.0.0.1 $(LIB_OBJ)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libfarmbot.so.0 -o libfarmbot.so.0.0.1 $(LIB_OBJ)
 
 libfarmbot.so.0: libfarmbot.so.0.0.1
 	$(RM) $@

@@ -1,6 +1,8 @@
 #ifndef LIBFARMBOT_H
 #define LIBFARMBOT_H
 
+#include <stdlib.h>
+
 #define MAX_SERVER_LENGTH 80
 
 #define debug_print(fmt, ...) \
@@ -9,6 +11,7 @@
 /** Farmbot Struct */
 typedef struct Farmbot {
   size_t connected;
+  char * server;
 } Farmbot;
 
 typedef struct FarmbotJWT {
@@ -19,8 +22,4 @@ size_t farmbot_init(struct Farmbot);
 
 /** Login to farmbot services */
 size_t farmbot_login(struct Farmbot, char * email, char * password, char * server);
-
-/** Post some data to the Farmbot API. */
-size_t farmbot_http_post(Farmbot farmbot, char * slug, char * payload);
-
 #endif
