@@ -11,24 +11,18 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdat
   size_t realsize = size * nmemb;
   response->size = realsize;
   response->data = malloc(realsize);
-  strcpy(response->data, ptr);
-  // debug_print("moving data %d\n", realsize);
+  strncpy(response->data, ptr, realsize);
   return realsize;
 }
 
-size_t farmbot_http_init(Farmbot farmbot) {
-  return 0;
-}
-
-HTTPResponse farmbot_http_post(Farmbot farmbot, char * slug, char * payload) {
+HTTPResponse farmbot_http_post(Farmbot *farmbot, char * slug, char * payload) {
   CURL *curl = curl_easy_init();
   HTTPResponse response;
   response.error = 1;
   int ret;
 
   char url[80];
-  snprintf(url, sizeof url, "%s%s", farmbot.server, slug);
-  debug_print("using url: %s\n\n", url);
+  snprintf(url, sizeof url, "%s%s", farmbot->server, slug);
   if(!curl) {
     debug_print("CURL MACHINE BROKE %d\n", curl);
     return response;
@@ -51,14 +45,16 @@ HTTPResponse farmbot_http_post(Farmbot farmbot, char * slug, char * payload) {
   ret = curl_easy_perform(curl);
 
   curl_easy_cleanup(curl);
+
+  size_t response_code;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+  response.response_code = response_code;
+
   if(ret != CURLE_OK) {
     debug_print("curl_easy_perform() failed: %s\n", curl_easy_strerror(ret));
+    response.error = ret;
   } else {
-    long response_code;
-    debug_print("HTTP SUCCESS. %d\n", ret);
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
     response.error = 0;
-    response.response_code = response_code;
   }
 
   return response;

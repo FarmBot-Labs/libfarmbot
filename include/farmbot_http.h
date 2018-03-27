@@ -7,15 +7,13 @@
 
 typedef struct HTTPResponse {
   size_t size;
-  long response_code;
-  char * data;
+  size_t response_code;
   size_t error;
+  char * data;
 } HTTPResponse;
 
-/** Initialize Farmbot HTTP interface. */
-size_t farmbot_http_init(Farmbot farmbot);
 
 /** Post some data to the Farmbot API. */
-HTTPResponse farmbot_http_post(Farmbot farmbot, char * slug, char * payload);
+HTTPResponse farmbot_http_post(Farmbot *farmbot, char * slug, char * payload);
 
 #endif
