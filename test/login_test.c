@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "farmbot.h"
+#include <farmbot.h>
 #include "farmbot_test.h"
 
 int main(int argc, char const *argv[]) {

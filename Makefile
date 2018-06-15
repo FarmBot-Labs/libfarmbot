@@ -1,35 +1,61 @@
-LIB_SRC=$(wildcard src/*.c)
-LIB_OBJ=$(LIB_SRC:.c=.o)
+LIBFARMBOT_MAJOR := 0
+LIBFARMBOT_MINOR := 1
+LIBFARMBOT_REL   := 0
 
-TESTS_SRC=$(wildcard test/*.c)
-TESTS_EXES=$(TESTS_SRC:.c=.test)
+LIBFARMBOT_DIR         ?= $(PWD)
+LIBFARMBOT_OUT_DIR     := $(LIBFARMBOT_DIR)/out
+LIBFARMBOT_INCLUDE_DIR := $(LIBFARMBOT_DIR)/include
+LIBFARMBOT_SRC_DIR     := $(LIBFARMBOT_DIR)/src
+LIBFARMBOT_TEST_DIR    := $(LIBFARMBOT_DIR)/test
+LIBFARMBOT_VENDER_DIR  := $(LIBFARMBOT_DIR)/vendor
 
-CFLAGS += -std=c99 -Iinclude -DDEBUG
-LDFLAGS += -lcurl
+LIBFARMBOT             := $(LIBFARMBOT_OUT_DIR)/libfarmbot.so
+LIBFARMBOT_SRC         := $(wildcard $(LIBFARMBOT_SRC_DIR)/*.c)
+LIBFARMBOT_OBJ         := $(LIBFARMBOT_SRC:.c=.o)
 
-all: libfarmbot.so.0
+LIBFARMBOT_TEST_SRC    := $(wildcard $(LIBFARMBOT_TEST_DIR)/*.c)
+LIBFARMBOT_TEST_OBJ    := $(LIBFARMBOT_TEST_SRC:.c=.o)
+LIBFARMBOT_TEST        := $(LIBFARMBOT_TEST_SRC:.c=.test)
+# LIBFARMBOT_TEST      := $(patsubst $(LIBFARMBOT_TEST_DIR)/%,$(LIBFARMBOT_OUT_DIR)/%,$(LIBFARMBOT_TEST))
 
-%.o: %.c
-	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
+ALL := $(LIBFARMBOT_OUT_DIR) $(LIBFARMBOT) $(LIBFARMBOT_TEST)
+CLEAN :=
+PHONY := all clean test
 
-libfarmbot.so.0.0.1: $(LIB_OBJ)
-	$(CC) $(LDFLAGS) -shared -Wl,-soname,libfarmbot.so.0 -o libfarmbot.so.0.0.1 $(LIB_OBJ)
+include $(LIBFARMBOT_VENDER_DIR)/cJSON/cJSON.mk
 
-libfarmbot.so.0: libfarmbot.so.0.0.1
-	$(RM) $@
-	ln -s $< $@
+INCLUDE_CFLAGS := \
+-I$(LIBFARMBOT_INCLUDE_DIR) \
+-I$(cJSON_INCLUDE_DIR)
 
-test: all $(TESTS_EXES)
+CFLAGS ?= -std=c11 -g -DDEBUG -c -fPIC --shared $(INCLUDE_CFLAGS)
+LDFLAGS ?= -lcurl -fPIC --shared
 
-%.test: %.c
-	$(CC) $(CFLAGS) -Wl,-R -Wl,./ libfarmbot.so.0 -o $@ $<
-	$@
+.PHONY: $(PHONY)
+.DEFAULT_GOAL: all
 
-clean-test:
-	$(RM) $(TESTS_EXES)
+all: $(ALL)
 
-clean-lib:
-	$(RM) $(LIB_OBJ)
-	$(RM) libfarmbot.so.0.0.1 libfarmbot.so.0
+clean: $(CLEAN)
+	$(RM) $(LIBFARMBOT_OBJ)
+	$(RM) $(LIBFARMBOT)
+	$(RM) $(LIBFARMBOT_TEST_OBJ)
 
-clean: clean-lib clean-test
+test: $(LIBFARMBOT_TEST)
+	LD_LIBRARY_PATH=$(LIBFARMBOT_OUT_DIR) test/login_test.test
+
+
+$(LIBFARMBOT_SRC_DIR)/%.o: $(LIBFARMBOT_SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(LIBFARMBOT): $(LIBFARMBOT_OBJ)
+	$(CC) $(LDFLAGS) $(LIBFARMBOT_OBJ) -o $@
+
+$(LIBFARMBOT_TEST_DIR)/%.o: $(LIBFARMBOT_TEST_DIR)/%.c
+	$(CC) -o $@ -c -g -std=c11 -DDEBUG -I$(LIBFARMBOT_INCLUDE_DIR) $<
+
+$(LIBFARMBOT_TEST_DIR)/%.test: $(LIBFARMBOT_TEST_DIR)/%.o
+	$(CC) -o $@ -L$(LIBFARMBOT_OUT_DIR) $< -lfarmbot
+
+$(LIBFARMBOT_OUT_DIR):
+	mkdir -p $@
