@@ -6,10 +6,10 @@
 #include <curl/curl.h>
 
 typedef struct HTTPResponse {
-  size_t size;
-  size_t response_code;
-  size_t error;
-  char * data;
+    size_t size;
+    size_t response_code;
+    size_t error;
+    char * data;
 } HTTPResponse;
 
 
